@@ -89,6 +89,24 @@ export function ContextProvider(props: any): JSX.Element {
         smallScreen: result.res.toString(),
         breakpoint: false
       });
+    } else if (newOperator === "=") {
+      result.smallScreen
+        ? setResult({
+            numToDisplay: calculate().toString(),
+            smallScreen: result.smallScreen + operator.sign + checkedDigit,
+            dotInNum: false,
+            dotAtEnd: false,
+            res: calculate(),
+            breakpoint: true
+          })
+        : setResult({
+            numToDisplay: calculate().toString(),
+            smallScreen: checkedDigit,
+            dotInNum: false,
+            dotAtEnd: false,
+            res: calculate(),
+            breakpoint: true
+          });
     } else if (!result.smallScreen) {
       setResult({
         ...result,
@@ -97,15 +115,6 @@ export function ContextProvider(props: any): JSX.Element {
         dotInNum: false,
         dotAtEnd: false,
         res: Number(checkedDigit)
-      });
-    } else if (newOperator === "=") {
-      setResult({
-        numToDisplay: calculate().toString(),
-        smallScreen: result.smallScreen + operator.sign + checkedDigit,
-        dotInNum: false,
-        dotAtEnd: false,
-        res: calculate(),
-        breakpoint: true
       });
     } else if (!operator.status) {
       setResult({

@@ -1,4 +1,5 @@
 App created by using React, Hooks && TypeScript
+Styled using SCSS
 
 ##
 
