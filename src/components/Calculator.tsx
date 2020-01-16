@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { CalcButton } from "./Button";
 import "../App.scss";
-
+import { AppContext } from "../AppContext";
 const characters: string[] = [
   "=",
   "C",
@@ -38,6 +38,10 @@ interface IOperator {
 }
 
 export const Calculator: React.FC = () => {
+  const store = useContext(AppContext);
+
+  console.log(store);
+
   const [result, setResult] = useState<IResult>({
     numToDisplay: "0",
     smallScreen: false,
@@ -58,8 +62,6 @@ export const Calculator: React.FC = () => {
       clean();
     } else {
       if (operator.status) {
-        console.log("im here...");
-
         digit === "."
           ? setResult({
               ...result,
@@ -96,9 +98,6 @@ export const Calculator: React.FC = () => {
     const checkedDigit: string = result.dotAtEnd
       ? result.numToDisplay.slice(0, -1)
       : result.numToDisplay;
-
-    console.log(result.breakpoint);
-    console.log(newOperator);
 
     if (result.breakpoint) {
       setResult({
