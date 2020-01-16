@@ -29,6 +29,7 @@ interface IResult {
   dotInNum: boolean;
   dotAtEnd: boolean;
   res: number;
+  breakpoint: boolean;
 }
 
 interface IOperator {
@@ -42,7 +43,8 @@ export const Calculator: React.FC = () => {
     smallScreen: false,
     dotInNum: false,
     dotAtEnd: false,
-    res: 0
+    res: 0,
+    breakpoint: false
   });
 
   const [operator, setOperator] = useState<IOperator>({
@@ -52,78 +54,93 @@ export const Calculator: React.FC = () => {
 
   // display result on screen
   function numberTyping(digit: string): void {
-    if (operator.status) {
-      digit === "."
-        ? setResult({
-            ...result,
-            numToDisplay: "0" + digit,
-            dotInNum: true,
-            dotAtEnd: true
-          })
-        : setResult({ ...result, numToDisplay: digit });
-    } else if (!result.dotInNum) {
-      digit === "."
-        ? setResult({
-            ...result,
-            numToDisplay: result.numToDisplay + digit,
-            dotInNum: true,
-            dotAtEnd: true
-          })
-        : setResult({ ...result, numToDisplay: result.numToDisplay + digit });
-    } else if (digit !== ".") {
-      setResult({
-        ...result,
-        numToDisplay: result.numToDisplay + digit,
-        dotAtEnd: false
-      });
-    }
+    if (result.breakpoint) {
+      clean();
+    } else {
+      if (operator.status) {
+        console.log("im here...");
 
-    setOperator({ ...operator, status: false });
+        digit === "."
+          ? setResult({
+              ...result,
+              numToDisplay: "0" + digit,
+              dotInNum: true,
+              dotAtEnd: true
+            })
+          : setResult({ ...result, numToDisplay: digit });
+      } else if (!result.dotInNum) {
+        digit === "."
+          ? setResult({
+              ...result,
+              numToDisplay: result.numToDisplay + digit,
+              dotInNum: true,
+              dotAtEnd: true
+            })
+          : setResult({ ...result, numToDisplay: result.numToDisplay + digit });
+      } else if (digit !== ".") {
+        setResult({
+          ...result,
+          numToDisplay: result.numToDisplay + digit,
+          dotAtEnd: false
+        });
+      }
+      setOperator({ ...operator, status: false });
+    }
   }
 
   // handle operator click
   function operatorToUse(newOperator: string): void {
+    calculate();
+
     //removing dot at the end of the digit
     const checkedDigit: string = result.dotAtEnd
       ? result.numToDisplay.slice(0, -1)
       : result.numToDisplay;
 
-    if (!result.smallScreen) {
+    console.log(result.breakpoint);
+    console.log(newOperator);
+
+    if (result.breakpoint) {
+      setResult({
+        ...result,
+        smallScreen: result.res.toString(),
+        breakpoint: false
+      });
+    } else if (!result.smallScreen) {
       setResult({
         ...result,
         numToDisplay: checkedDigit,
         smallScreen: checkedDigit,
         dotInNum: false,
-        dotAtEnd: false
+        dotAtEnd: false,
+        res: Number(checkedDigit)
       });
-      setOperator({ status: true, sign: newOperator });
+    } else if (newOperator === "=") {
+      setResult({
+        numToDisplay: calculate().toString(),
+        smallScreen: result.smallScreen + operator.sign + checkedDigit,
+        dotInNum: false,
+        dotAtEnd: false,
+        res: calculate(),
+        breakpoint: true
+      });
     } else if (!operator.status) {
       setResult({
         ...result,
-        numToDisplay: checkedDigit,
+        numToDisplay: calculate().toString(),
         smallScreen: result.smallScreen + operator.sign + checkedDigit,
         dotInNum: false,
-        dotAtEnd: false
+        dotAtEnd: false,
+        res: calculate()
       });
-      setOperator({ status: true, sign: newOperator });
     }
-  }
 
-  // handle clean button
-  function clean(): void {
-    setResult({
-      numToDisplay: "0",
-      smallScreen: false,
-      dotInNum: false,
-      dotAtEnd: false,
-      res: 0
-    });
-    setOperator({ status: true, sign: "" });
+    setOperator({ status: true, sign: newOperator });
   }
 
   // execute the canculation
-  function canculate(operation: string): number {
-    switch (operation) {
+  function calculate(): number {
+    switch (operator.sign) {
       case "+":
         return result.res + Number(result.numToDisplay);
       case "-":
@@ -135,6 +152,19 @@ export const Calculator: React.FC = () => {
       default:
         return result.res;
     }
+  }
+
+  // handle clean button
+  function clean(): void {
+    setResult({
+      numToDisplay: "0",
+      smallScreen: false,
+      dotInNum: false,
+      dotAtEnd: false,
+      res: 0,
+      breakpoint: false
+    });
+    setOperator({ status: true, sign: "" });
   }
 
   return (
@@ -158,12 +188,6 @@ export const Calculator: React.FC = () => {
               </CalcButton>
             );
           } else if (val === "C") {
-            return (
-              <CalcButton key={ind} handleClick={() => clean()}>
-                {val}
-              </CalcButton>
-            );
-          } else if (val === "=") {
             return (
               <CalcButton key={ind} handleClick={() => clean()}>
                 {val}
