@@ -25,7 +25,9 @@ const characters: string[] = [
 
 interface IResult {
   numToDisplay: string;
-  smallScreen: string;
+  smallScreen: string | boolean;
+  dotInNum: boolean;
+  dotAtEnd: boolean;
   res: number;
 }
 
@@ -37,42 +39,101 @@ interface IOperator {
 export const Calculator: React.FC = () => {
   const [result, setResult] = useState<IResult>({
     numToDisplay: "0",
-    smallScreen: "",
+    smallScreen: false,
+    dotInNum: false,
+    dotAtEnd: false,
     res: 0
   });
 
   const [operator, setOperator] = useState<IOperator>({
-    status: false,
+    status: true,
     sign: ""
   });
 
   // display result on screen
   function numberTyping(digit: string): void {
-    if (result.numToDisplay === "0") {
-      setResult({ ...result, numToDisplay: digit });
-    } else if (operator.status) {
+    if (operator.status) {
+      digit === "."
+        ? setResult({
+            ...result,
+            numToDisplay: "0" + digit,
+            dotInNum: true,
+            dotAtEnd: true
+          })
+        : setResult({ ...result, numToDisplay: digit });
+    } else if (!result.dotInNum) {
+      digit === "."
+        ? setResult({
+            ...result,
+            numToDisplay: result.numToDisplay + digit,
+            dotInNum: true,
+            dotAtEnd: true
+          })
+        : setResult({ ...result, numToDisplay: result.numToDisplay + digit });
+    } else if (digit !== ".") {
       setResult({
         ...result,
-        numToDisplay: digit,
-        smallScreen: result.smallScreen + operator.sign
+        numToDisplay: result.numToDisplay + digit,
+        dotAtEnd: false
       });
-    } else {
-      setResult({ ...result, numToDisplay: result.numToDisplay + digit });
     }
 
-    setOperator({ status: false, sign: "" });
+    setOperator({ ...operator, status: false });
   }
 
-  // manage operator click
+  // handle operator click
   function operatorToUse(newOperator: string): void {
-    if (operator.status) {
-      setOperator({ ...operator, sign: newOperator });
-    } else {
+    //removing dot at the end of the digit
+    const checkedDigit: string = result.dotAtEnd
+      ? result.numToDisplay.slice(0, -1)
+      : result.numToDisplay;
+
+    if (!result.smallScreen) {
       setResult({
         ...result,
-        smallScreen: result.smallScreen + result.numToDisplay
+        numToDisplay: checkedDigit,
+        smallScreen: checkedDigit,
+        dotInNum: false,
+        dotAtEnd: false
       });
       setOperator({ status: true, sign: newOperator });
+    } else if (!operator.status) {
+      setResult({
+        ...result,
+        numToDisplay: checkedDigit,
+        smallScreen: result.smallScreen + operator.sign + checkedDigit,
+        dotInNum: false,
+        dotAtEnd: false
+      });
+      setOperator({ status: true, sign: newOperator });
+    }
+  }
+
+  // handle clean button
+  function clean(): void {
+    setResult({
+      numToDisplay: "0",
+      smallScreen: false,
+      dotInNum: false,
+      dotAtEnd: false,
+      res: 0
+    });
+    setOperator({ status: true, sign: "" });
+  }
+
+  // execute the canculation
+  function canculate(operation: string): number {
+    switch (operation) {
+      case "+":
+        return result.res + Number(result.numToDisplay);
+      case "-":
+        return result.res - Number(result.numToDisplay);
+      case ":":
+        return result.res / Number(result.numToDisplay);
+      case "*":
+        return result.res * Number(result.numToDisplay);
+      default:
+        return result.res;
     }
   }
 
@@ -90,9 +151,21 @@ export const Calculator: React.FC = () => {
           <h1>{result.numToDisplay}</h1>
         </div>
         {characters.map((val: string, ind: number) => {
-          if (Number(val) || val === "0") {
+          if (Number(val) || val === "0" || val === ".") {
             return (
               <CalcButton key={ind} handleClick={() => numberTyping(val)}>
+                {val}
+              </CalcButton>
+            );
+          } else if (val === "C") {
+            return (
+              <CalcButton key={ind} handleClick={() => clean()}>
+                {val}
+              </CalcButton>
+            );
+          } else if (val === "=") {
+            return (
+              <CalcButton key={ind} handleClick={() => clean()}>
                 {val}
               </CalcButton>
             );
